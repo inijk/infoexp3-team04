@@ -36,8 +36,10 @@ def create_message():
     data = request.get_json(silent=True) or {}
     name = str(data.get("name", "")).strip()[:30]
     message = str(data.get("message", "")).strip()[:300]
-    if not name or not message:
-        return jsonify({"error": "name and message are required"}), 400
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+    if not message:
+        return jsonify({"error": "message is required"}), 400
     created_at = datetime.now(timezone.utc).isoformat()
     with connect() as con:
         cur = con.execute("INSERT INTO messages(name,message,created_at) VALUES(?,?,?)", (name,message,created_at))
