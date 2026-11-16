@@ -83,3 +83,182 @@ h1 {
     font-size: 14px;
     margin-top: 10px;
 }
+
+/* === ここからログイン画面用に追加 === */
+#login-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(40, 30, 20, 0.88);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#login-overlay h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.login-note {
+    font-size: 12px;
+    color: #ddd;
+    margin: 0 0 15px;
+}
+
+#login-overlay input {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+#login-overlay button {
+    width: 80%;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.error-text {
+    color: #ff8080;
+    font-size: 13px;
+    min-height: 18px;
+    margin: 0 0 8px;
+}
+
+/* === style.css の末尾に追記 === */
+
+/* ID指定の display: flex より確実に優先させてログイン画面を閉じる */
+#login-overlay.hidden {
+    display: none !important;
+}
+
+/* ログイン後の自分の上位5スコア表示エリア */
+#my-stats {
+    width: 400px;
+    margin: 0 auto 10px;
+    padding: 8px 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    text-align: left;
+    font-size: 13px;
+    color: #5c4033;
+}
+
+.my-stats-header {
+    font-weight: bold;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+
+#my-top-scores {
+    margin: 0;
+    padding-left: 20px;
+}
+
+#my-top-scores li {
+    line-height: 1.5;
+}
+
+#logout-btn {
+    margin-left: 5px;
+    padding: 2px 6px;
+    font-size: 11px;
+    cursor: pointer;
+    background-color: #8b5a2b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+/* === ここから左右ランキングレイアウト用に追記 === */
+.main-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 20px;
+    flex-wrap: wrap; /* 画面幅が狭い時は自動で折り返す */
+}
+
+.ranking-panel {
+    width: 260px;
+    min-height: 520px;
+    margin-top: 48px; /* 中央のh1タイトルと高さを揃える */
+    padding: 16px;
+    background-color: #fff;
+    border: 3px solid #8b5a2b;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    text-align: left;
+    color: #5c4033;
+}
+
+.ranking-panel h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    text-align: center;
+    border-bottom: 2px solid #fdf6e3;
+    padding-bottom: 6px;
+}
+
+.panel-subtitle {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+
+.ranking-list {
+    margin: 0;
+    padding-left: 22px;
+    font-size: 13px;
+}
+
+.ranking-list li {
+    padding: 6px 0;
+    border-bottom: 1px dashed #eee;
+    line-height: 1.4;
+}
+
+.ranking-list li:nth-child(1) {
+    color: #d4af37;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.ranking-list li:nth-child(2) {
+    color: #7f8c8d;
+    font-weight: bold;
+}
+
+.ranking-list li:nth-child(3) {
+    color: #b87333;
+    font-weight: bold;
+}
+
+.rank-meta {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    font-weight: normal;
+}
