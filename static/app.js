@@ -9,6 +9,9 @@ const DEADLINE_Y = 100;
 // 難易度（ボールの大きさ加算値：0が標準、プラスにすると大きく難しくなる）
 const difficulty = 15;
 
+// ホールドに必要な消費スコア
+const HOLD_COST = 1000;
+
 // 動物の定義（レベル順：名前、半径、代替色、獲得スコア）
 const ANIMALS = [
     { name: "ハムスター", radius: 15 + difficulty, color: "#ff4d4d", score: 10 },
@@ -39,14 +42,18 @@ const animalImages = ANIMALS.map((animal, index) => {
 let score = 0;
 let currentAnimalIndex = 0;
 let nextAnimalIndex = 0;
+let holdAnimalIndex = null; // ホールド中の動物（初期は空 = null）
+let canHold = true;         // 1ターンに1回だけホールド可能にするフラグ
 let currentX = WIDTH / 2;
 let canDrop = true;
 let isGameOver = false;
 let isGameStarted = false;
 
-// HTML要素の取得（ゲーム用）
+// HTML要素の取得（ゲーム用・ホールド用）
 const scoreEl = document.getElementById("score");
 const nextAnimalEl = document.getElementById("next-fruit");
+const holdSlotEl = document.getElementById("hold-slot");
+const holdBtn = document.getElementById("hold-btn");
 const gameOverEl = document.getElementById("game-over");
 const wrapperEl = document.getElementById("canvas-wrapper");
 
@@ -107,10 +114,82 @@ function startGame() {
         nextAnimalEl.innerHTML = `<img src="${nextAnimal.src}" alt="${nextAnimal.name}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; vertical-align: middle;">`;
     }
 
+    // ホールド枠の表示を更新する関数
+    function updateHoldDisplay() {
+        if (holdAnimalIndex === null) {
+            holdSlotEl.innerHTML = `<span class="hold-empty">なし</span>`;
+            return;
+        }
+        const heldAnimal = ANIMALS[holdAnimalIndex];
+        const imgSize = Math.min(68, Math.max(36, heldAnimal.radius * 1.1));
+        holdSlotEl.innerHTML = `<img src="${heldAnimal.src}" alt="${heldAnimal.name}" style="width: ${imgSize}px; height: ${imgSize}px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(0,0,0,0.2);">`;
+    }
+
+    // ホールドボタンの有効/無効と文言を更新する関数
+    function updateHoldButtonState() {
+        holdBtn.textContent = `ホールド (${HOLD_COST}点消費)`;
+        // 落下可能・このターン未ホールド・ゲーム中・かつスコアが足りている時だけ有効
+        holdBtn.disabled = !(canDrop && canHold && !isGameOver && score >= HOLD_COST);
+    }
+
+    // ホールド実行処理（スコア消費方式）
+    function performHold() {
+        if (!canDrop || !canHold || isGameOver) return;
+        if (score < HOLD_COST) return; // スコア不足なら実行しない
+
+        // スコアを消費して画面表示を更新
+        score -= HOLD_COST;
+        scoreEl.textContent = score;
+
+        canHold = false;
+
+        if (holdAnimalIndex === null) {
+            // 初期（空）のとき：今の動物をホールドし、「次の動物」を繰り上げる
+            holdAnimalIndex = currentAnimalIndex;
+            currentAnimalIndex = nextAnimalIndex;
+            nextAnimalIndex = getRandomAnimalIndex();
+            updateNextDisplay();
+        } else {
+            // すでにホールドがあるとき：今の動物とホールド内の動物を入れ替える
+            const temp = currentAnimalIndex;
+            currentAnimalIndex = holdAnimalIndex;
+            holdAnimalIndex = temp;
+        }
+
+        // 入れ替えた後の動物が壁にめり込まないようX座標を再補正
+        const radius = ANIMALS[currentAnimalIndex].radius;
+        currentX = Math.max(radius, Math.min(WIDTH - radius, currentX));
+
+        updateHoldDisplay();
+        updateHoldButtonState();
+    }
+
     // 初期動物のセット
     currentAnimalIndex = getRandomAnimalIndex();
     nextAnimalIndex = getRandomAnimalIndex();
+    holdAnimalIndex = null;
+    canHold = true;
+    holdBtn.disabled = false;
     updateNextDisplay();
+    updateHoldDisplay();
+    updateHoldButtonState(); // ← 初期スコア0なので自動で無効化される
+
+    // ホールドボタン・ショートカット操作
+    holdBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        performHold();
+    });
+
+    wrapperEl.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        performHold();
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "c" || e.key === "C") {
+            performHold();
+        }
+    });
 
     // 動物の物理ボディを生成する関数
     function createAnimal(x, y, index) {
@@ -185,6 +264,11 @@ function startGame() {
             nextAnimalIndex = getRandomAnimalIndex();
             updateNextDisplay();
             canDrop = true;
+            if (!isGameOver) {
+                canHold = true;
+                holdBtn.disabled = false;
+            }
+            updateHoldButtonState(); // ← 500点以上あればここで再び有効化
         }, 500);
     });
 
@@ -204,20 +288,27 @@ function startGame() {
                 !bodyB.isMerged
             ) {
                 const index = bodyA.animalIndex;
-                if (index >= ANIMALS.length - 1) continue;
 
+                // 多重合体を防ぐためフラグを立てる
                 bodyA.isMerged = true;
                 bodyB.isMerged = true;
 
-                const midX = (bodyA.position.x + bodyB.position.x) / 2;
-                const midY = (bodyA.position.y + bodyB.position.y) / 2;
-
+                // 2つの動物のうち古い方を削除対象から外すのではなく両方削除する
                 Composite.remove(world, [bodyA, bodyB]);
-                const newAnimal = createAnimal(midX, midY, index + 1);
-                Composite.add(world, newAnimal);
 
+                // スコア加算（ゾウの score: 1280 がそのまま大きく加算されます）
                 score += ANIMALS[index].score;
                 scoreEl.textContent = score;
+                updateHoldButtonState(); // ← 500点を超えた瞬間にボタンが有効化
+
+                // 最大サイズ（ゾウ）同士なら消滅のみで新しい動物は生成しない
+                if (index >= ANIMALS.length - 1) continue;
+
+                // それ以外の動物は中間地点に1段階大きい動物を生成
+                const midX = (bodyA.position.x + bodyB.position.x) / 2;
+                const midY = (bodyA.position.y + bodyB.position.y) / 2;
+                const newAnimal = createAnimal(midX, midY, index + 1);
+                Composite.add(world, newAnimal);
             }
         }
     });
@@ -260,6 +351,8 @@ function startGame() {
                     body.position.y - ANIMALS[body.animalIndex].radius < DEADLINE_Y
                 ) {
                     isGameOver = true;
+                    updateHoldButtonState(); // ← ゲームオーバー時は自動で無効化
+                    holdBtn.disabled = true;
                     document.getElementById("final-score-text").textContent = `今回のスコア: ${score} 点`;
                     gameOverEl.classList.remove("hidden");
                     submitScore(score);
@@ -283,11 +376,12 @@ async function loadRankings() {
         const data = await res.json();
         if (!data.ok) return;
 
-        // 左パネル：自分のランキング
-        if (data.my_ranking.length === 0) {
+        // 左パネル：自分のランキング（上位3件のみ表示）
+        const myTop3 = data.my_ranking.slice(0, 3);
+        if (myTop3.length === 0) {
             myRankingListEl.innerHTML = "<li>まだ記録がありません</li>";
         } else {
-            myRankingListEl.innerHTML = data.my_ranking
+            myRankingListEl.innerHTML = myTop3
                 .map(item => `
                     <li>
                         <strong>${item.score} 点</strong>

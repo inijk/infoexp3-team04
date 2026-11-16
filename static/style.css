@@ -230,3 +230,92 @@ h1 {
     color: #888;
     font-weight: normal;
 }
+
+/* 左カラム（上にホールド、下に自分のTOP3） */
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 260px;
+    margin-top: 48px;
+}
+
+.hold-panel {
+    width: 100%;
+    padding: 14px 16px;
+    background-color: #fff;
+    border: 3px solid #8b5a2b;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    text-align: center;
+    color: #5c4033;
+}
+
+.hold-panel h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    border-bottom: 2px solid #fdf6e3;
+    padding-bottom: 6px;
+}
+
+.hold-slot {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 10px;
+    border: 2px dashed #c4a484;
+    border-radius: 50%;
+    background-color: #fffaf0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hold-empty {
+    font-size: 13px;
+    color: #999;
+}
+
+#hold-btn {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: bold;
+    background-color: #8b5a2b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+#hold-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+#hold-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 左右のランキングパネル */
+.ranking-panel {
+    width: 260px;
+    min-height: 520px;
+    margin-top: 48px;
+    padding: 16px;
+    background-color: #fff;
+    border: 3px solid #8b5a2b;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    text-align: left;
+    color: #5c4033;
+}
+
+/* 左カラム内の自分のランキングは余白・高さをコンパクトに調整 */
+.left-column .my-ranking-panel {
+    width: 100%;
+    min-height: 310px;
+    margin-top: 0;
+}
