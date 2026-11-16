@@ -1,3 +1,4 @@
+// 動物の定義（レベル順：半径、色、獲得スコア、画像パス）
 // Matter.jsの主要モジュールを取り出す
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
@@ -6,24 +7,40 @@ const WIDTH = 400;
 const HEIGHT = 600;
 const DEADLINE_Y = 100;
 
-// 動物の定義（レベル順：半径、色、獲得スコア、画像パス）
+// 動物の定義（レベル順：半径、色、獲得スコア）
+// ※ srcはHTML側から渡された FLASK_IMAGE_URLS を自動で割り当てます
 const ANIMALS = [
-    { name: "ハムスター", radius: 15, color: "#ff4d4d", score: 10, src: "images/hamster_0.png" },
-    { name: "ハリネズミ", radius: 22, color: "#ff85a2", score: 20, src: "images/hedgehog_0.png" },
-    { name: "オウム",     radius: 30, color: "#a262ff", score: 40, src: "images/parrot_0.png" },
-    { name: "コアラ",     radius: 38, color: "#ffb84d", score: 80, src: "images/koala_0.png" },
-    { name: "ひつじ",     radius: 48, color: "#ff9933", score: 160, src: "images/sheep_0.png" },
-    { name: "ライオン",   radius: 60, color: "#e62e00", score: 320, src: "images/lion_0.png" },
-    { name: "カバ",       radius: 75, color: "#99e600", score: 640, src: "images/hippo_0.png" },
-    { name: "ゾウ",       radius: 95, color: "#33cc33", score: 1280, src: "images/elephant_0.png" }
+    { name: "ハムスター", radius: 15, color: "#ff4d4d", score: 10 },
+    { name: "ハリネズミ", radius: 22, color: "#ff85a2", score: 20 },
+    { name: "オウム",     radius: 30, color: "#a262ff", score: 40 },
+    { name: "コアラ",     radius: 38, color: "#ffb84d", score: 80 },
+    { name: "ひつじ",     radius: 48, color: "#ff9933", score: 160 },
+    { name: "ライオン",   radius: 60, color: "#e62e00", score: 320 },
+    { name: "カバ",       radius: 75, color: "#99e600", score: 640 },
+    { name: "ゾウ",       radius: 95, color: "#33cc33", score: 1280 }
 ];
 
-// 画像を事前に読み込んで保持する
-const animalImages = ANIMALS.map(animal => {
+// HTML側から渡されたFlaskの正確な画像パスをANIMALSに結合し、画像を事前に読み込む
+const animalImages = ANIMALS.map((animal, index) => {
+    // HTML側で定義した FLASK_IMAGE_URLS からパスを取得
+    const imageUrl = (typeof FLASK_IMAGE_URLS !== 'undefined') ? FLASK_IMAGE_URLS[index] : `images/animal_${index}.png`;
+    animal.src = imageUrl; // プロパティとしても保持
+
     const img = new Image();
-    img.src = animal.src;
+    img.src = imageUrl;
+
+    // デバッグ用（画像読み込み成功・失敗の確認用）
+    img.onload = () => {
+        console.log(`[成功] 画像ロードOK: ${animal.name} (${imageUrl})`);
+    };
+    img.onerror = () => {
+        console.error(`[エラー] 画像が見つかりません: ${imageUrl}`);
+    };
+
     return img;
 });
+
+// --- 以降のコード（状態管理変数、物理エンジン初期化、関数など）はそのまま変更なしでOKです ---
 
 // ゲームの状態管理変数
 let score = 0;
