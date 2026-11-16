@@ -4,7 +4,9 @@ const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 // ゲーム画面のサイズとゲームオーバー判定ライン（Y座標）
 const WIDTH = 400;
 const HEIGHT = 600;
-const DEADLINE_Y = 100;
+const BOX_WIDTH = 280;
+const BOX_HEIGHT = 450;
+const DEADLINE_Y = HEIGHT - BOX_HEIGHT;
 
 // フルーツの定義（レベル順：半径、色、獲得スコア）
 const FRUITS = [
@@ -52,11 +54,43 @@ Render.run(render);
 const runner = Runner.create();
 Runner.run(runner, engine);
 
-// 3. 容器（床・左壁・右壁）の作成（isStatic: true で固定）
+// 3. 容器（床・左壁・右壁）の作成
 const wallOptions = { isStatic: true, render: { fillStyle: "#8b5a2b" } };
-const ground = Bodies.rectangle(WIDTH / 2, HEIGHT + 25, WIDTH, 50, wallOptions);
-const leftWall = Bodies.rectangle(-25, HEIGHT / 2, 50, HEIGHT, wallOptions);
-const rightWall = Bodies.rectangle(WIDTH + 25, HEIGHT / 2, 50, HEIGHT, wallOptions);
+
+// 箱を中央に配置する
+const boxLeft = (WIDTH - BOX_WIDTH) / 2;
+const boxTop = HEIGHT - BOX_HEIGHT;
+
+// 壁の厚さ
+const wallThickness = 10;
+
+// 床
+const ground = Bodies.rectangle(
+    WIDTH / 2,
+    HEIGHT + wallThickness / 2,
+    BOX_WIDTH,
+    wallThickness,
+    wallOptions
+);
+
+// 左壁
+const leftWall = Bodies.rectangle(
+    boxLeft - wallThickness / 2,
+    boxTop + BOX_HEIGHT / 2,
+    wallThickness,
+    BOX_HEIGHT,
+    wallOptions
+);
+
+// 右壁
+const rightWall = Bodies.rectangle(
+    boxLeft + BOX_WIDTH + wallThickness / 2,
+    boxTop + BOX_HEIGHT / 2,
+    wallThickness,
+    BOX_HEIGHT,
+    wallOptions
+);
+
 Composite.add(world, [ground, leftWall, rightWall]);
 
 // 0〜3番目までの小さいフルーツからランダムにインデックスを返す
@@ -96,7 +130,10 @@ wrapperEl.addEventListener("mousemove", (e) => {
     const radius = FRUITS[currentFruitIndex].radius;
     // 壁にめり込まないようX座標を制限
     let x = e.clientX - rect.left;
-    currentX = Math.max(radius, Math.min(WIDTH - radius, x));
+    currentX = Math.max(
+        boxLeft + radius,
+        Math.min(boxLeft + BOX_WIDTH - radius, x)
+    );
 });
 
 // クリックでフルーツを落下させる
@@ -104,8 +141,13 @@ wrapperEl.addEventListener("click", () => {
     if (!canDrop || isGameOver) return;
 
     canDrop = false;
-    const fruitBody = createFruit(currentX, 50, currentFruitIndex);
-    Composite.add(world, fruitBody);
+    const radius = FRUITS[currentFruitIndex].radius;
+
+    const fruitBody = createFruit(
+        currentX,
+        boxTop + radius,
+        currentFruitIndex
+    );    Composite.add(world, fruitBody);
 
     // 0.5秒後に次のフルーツをセット
     setTimeout(() => {
@@ -163,8 +205,8 @@ Events.on(render, "afterRender", () => {
     // デッドライン（赤い破線）の描画
     ctx.beginPath();
     ctx.setLineDash([5, 5]);
-    ctx.moveTo(0, DEADLINE_Y);
-    ctx.lineTo(WIDTH, DEADLINE_Y);
+    ctx.moveTo(boxLeft, DEADLINE_Y);
+    ctx.lineTo(boxLeft + BOX_WIDTH, DEADLINE_Y);
     ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
     ctx.stroke();
     ctx.setLineDash([]);
@@ -173,7 +215,11 @@ Events.on(render, "afterRender", () => {
     if (canDrop && !isGameOver) {
         const preview = FRUITS[currentFruitIndex];
         ctx.beginPath();
-        ctx.arc(currentX, 50, preview.radius, 0, Math.PI * 2);
+const WIDTH = 400;
+const HEIGHT = 600;
+const BOX_WIDTH = 280;
+const BOX_HEIGHT = 450;
+const DEADLINE_Y = HEIGHT - BOX_HEIGHT;
         ctx.fillStyle = preview.color;
         ctx.globalAlpha = 0.6;
         ctx.fill();
