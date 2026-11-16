@@ -1,3 +1,4 @@
+// 動物の定義（レベル順：半径、色、獲得スコア、画像パス）
 // Matter.jsの主要モジュールを取り出す
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
