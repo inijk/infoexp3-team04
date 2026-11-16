@@ -1,26 +1,24 @@
-// 動物の定義（レベル順：半径、色、獲得スコア、画像パス）
 // Matter.jsの主要モジュールを取り出す
 const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
 
-// ゲーム画面および容器（箱）のサイズ・座標定義
+// ゲーム画面のサイズとゲームオーバー判定ライン（Y座標）
 const WIDTH = 400;
-const HEIGHT = 400;
-const BOX_WIDTH = 280;
-const BOX_HEIGHT = 450;
-const boxLeft = (WIDTH - BOX_WIDTH) / 2; // 60
-const boxTop = HEIGHT - BOX_HEIGHT;      // 150
-const DEADLINE_Y = boxTop;               // 150
+const HEIGHT = 600;
+const DEADLINE_Y = 100;
+
+// 難易度（ボールの大きさ加算値：0が標準、プラスにすると大きく難しくなる）
+const difficulty = 15;
 
 // 動物の定義（レベル順：名前、半径、代替色、獲得スコア）
 const ANIMALS = [
-    { name: "ハムスター", radius: 15, color: "#ff4d4d", score: 10 },
-    { name: "ハリネズミ", radius: 22, color: "#ff85a2", score: 20 },
-    { name: "オウム",     radius: 30, color: "#a262ff", score: 40 },
-    { name: "コアラ",     radius: 38, color: "#ffb84d", score: 80 },
-    { name: "ひつじ",     radius: 48, color: "#ff9933", score: 160 },
-    { name: "ライオン",   radius: 60, color: "#e62e00", score: 320 },
-    { name: "カバ",       radius: 75, color: "#99e600", score: 640 },
-    { name: "ゾウ",       radius: 95, color: "#33cc33", score: 1280 }
+    { name: "ハムスター", radius: 15 + difficulty, color: "#ff4d4d", score: 10 },
+    { name: "ハリネズミ", radius: 22 + difficulty, color: "#ff85a2", score: 20 },
+    { name: "オウム",     radius: 30 + difficulty, color: "#a262ff", score: 40 },
+    { name: "コアラ",     radius: 38 + difficulty, color: "#ffb84d", score: 80 },
+    { name: "ひつじ",     radius: 48 + difficulty, color: "#ff9933", score: 160 },
+    { name: "ライオン",   radius: 60 + difficulty, color: "#e62e00", score: 320 },
+    { name: "カバ",       radius: 75 + difficulty, color: "#99e600", score: 640 },
+    { name: "ゾウ",       radius: 95 + difficulty, color: "#33cc33", score: 1280 }
 ];
 
 // HTML側から渡されたFlaskの正確な画像パスをANIMALSに結合し、画像を事前読み込み
@@ -91,31 +89,11 @@ function startGame() {
     const runner = Runner.create();
     Runner.run(runner, engine);
 
-    // 3. 容器（床・左壁・右壁）の作成（280x450の箱を中央下部に配置）
+    // 3. 容器（床・左壁・右壁）の作成
     const wallOptions = { isStatic: true, render: { fillStyle: "#8b5a2b" } };
-    const wallThickness = 10;
-
-    const ground = Bodies.rectangle(
-        WIDTH / 2,
-        HEIGHT + wallThickness / 2,
-        BOX_WIDTH + wallThickness * 2,
-        wallThickness,
-        wallOptions
-    );
-    const leftWall = Bodies.rectangle(
-        boxLeft - wallThickness / 2,
-        boxTop + BOX_HEIGHT / 2,
-        wallThickness,
-        BOX_HEIGHT,
-        wallOptions
-    );
-    const rightWall = Bodies.rectangle(
-        boxLeft + BOX_WIDTH + wallThickness / 2,
-        boxTop + BOX_HEIGHT / 2,
-        wallThickness,
-        BOX_HEIGHT,
-        wallOptions
-    );
+    const ground = Bodies.rectangle(WIDTH / 2, HEIGHT + 25, WIDTH, 50, wallOptions);
+    const leftWall = Bodies.rectangle(-25, HEIGHT / 2, 50, HEIGHT, wallOptions);
+    const rightWall = Bodies.rectangle(WIDTH + 25, HEIGHT / 2, 50, HEIGHT, wallOptions);
     Composite.add(world, [ground, leftWall, rightWall]);
 
     // 0〜3番目までの小さい動物からランダムにインデックスを返す
@@ -183,16 +161,13 @@ function startGame() {
         ctx.restore();
     }
 
-    // マウス移動で落下X座標を更新（箱の内側に制限）
+    // マウス移動で落下X座標を更新
     wrapperEl.addEventListener("mousemove", (e) => {
         if (isGameOver) return;
         const rect = wrapperEl.getBoundingClientRect();
         const radius = ANIMALS[currentAnimalIndex].radius;
-        const x = e.clientX - rect.left;
-        currentX = Math.max(
-            boxLeft + radius,
-            Math.min(boxLeft + BOX_WIDTH - radius, x)
-        );
+        let x = e.clientX - rect.left;
+        currentX = Math.max(radius, Math.min(WIDTH - radius, x));
     });
 
     // クリックで動物を落下させる
@@ -200,15 +175,9 @@ function startGame() {
         if (!canDrop || isGameOver) return;
 
         canDrop = false;
-        const radius = ANIMALS[currentAnimalIndex].radius;
-        // 落下位置も箱の左右範囲内に収める
-        const spawnX = Math.max(
-            boxLeft + radius,
-            Math.min(boxLeft + BOX_WIDTH - radius, currentX)
-        );
-        const dropY = boxTop - radius - 10; // 箱の上部ラインのすぐ上から落下
-
-        const animalBody = createAnimal(spawnX, dropY, currentAnimalIndex);
+        const r = ANIMALS[currentAnimalIndex].radius;
+        const dropY = Math.max(50, r + 5); // 上にはみ出さない高さを確保
+        const animalBody = createAnimal(currentX, dropY, currentAnimalIndex);
         Composite.add(world, animalBody);
 
         setTimeout(() => {
@@ -265,24 +234,20 @@ function startGame() {
             }
         }
 
-        // デッドライン（箱の上端ライン）の描画
+        // デッドライン（赤い破線）の描画
         ctx.beginPath();
         ctx.setLineDash([5, 5]);
-        ctx.moveTo(boxLeft, DEADLINE_Y);
-        ctx.lineTo(boxLeft + BOX_WIDTH, DEADLINE_Y);
+        ctx.moveTo(0, DEADLINE_Y);
+        ctx.lineTo(WIDTH, DEADLINE_Y);
         ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // 落下前の動物のプレビュー表示（半透明）
+        // 落下前の動物のプレビュー表示
         if (canDrop && !isGameOver) {
-            const radius = ANIMALS[currentAnimalIndex].radius;
-            const previewX = Math.max(
-                boxLeft + radius,
-                Math.min(boxLeft + BOX_WIDTH - radius, currentX)
-            );
-            const previewY = boxTop - radius - 10;
-            drawAnimal(ctx, previewX, previewY, currentAnimalIndex, 0, 0.6);
+            const r = ANIMALS[currentAnimalIndex].radius;
+            const previewY = Math.max(50, r + 5);
+            drawAnimal(ctx, currentX, previewY, currentAnimalIndex, 0, 0.75);
         }
 
         // ゲームオーバー判定
