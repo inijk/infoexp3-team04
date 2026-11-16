@@ -13,14 +13,24 @@
     <!-- 画面全体を「左パネル・中央ゲーム・右パネル」の横並びにするラッパー -->
     <div class="main-layout">
 
-        <!-- 左側：自分のランキング -->
-        <aside class="ranking-panel">
-            <h2>🏆 自分の記録</h2>
-            <p class="panel-subtitle"><strong id="my-ranking-name">-</strong> のTOP10</p>
-            <ol id="my-ranking-list" class="ranking-list">
-                <li>ログイン後に表示されます</li>
-            </ol>
-        </aside>
+        <!-- 左側：ホールド枠（上）＋ 自分のランキングTOP3（下） -->
+        <div class="left-column">
+            <aside class="hold-panel">
+                <h2>📦 ホールド</h2>
+                <div id="hold-slot" class="hold-slot">
+                    <span class="hold-empty">なし</span>
+                </div>
+                <button id="hold-btn" type="button" disabled>ホールド / 入替 (C / 右クリック)</button>
+            </aside>
+
+            <aside class="ranking-panel my-ranking-panel">
+                <h2>🏆 自分の記録</h2>
+                <p class="panel-subtitle"><strong id="my-ranking-name">-</strong> のTOP3</p>
+                <ol id="my-ranking-list" class="ranking-list">
+                    <li>ログイン後に表示されます</li>
+                </ol>
+            </aside>
+        </div>
 
         <!-- 中央：ゲーム画面 -->
         <div class="game-container">
