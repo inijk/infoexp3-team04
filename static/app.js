@@ -9,6 +9,9 @@ const DEADLINE_Y = 100;
 // 難易度（ボールの大きさ加算値：0が標準、プラスにすると大きく難しくなる）
 const difficulty = 15;
 
+// ホールドに必要な消費スコア
+const HOLD_COST = 1000;
+
 // 動物の定義（レベル順：名前、半径、代替色、獲得スコア）
 const ANIMALS = [
     { name: "ハムスター", radius: 15 + difficulty, color: "#ff4d4d", score: 10 },
@@ -122,12 +125,23 @@ function startGame() {
         holdSlotEl.innerHTML = `<img src="${heldAnimal.src}" alt="${heldAnimal.name}" style="width: ${imgSize}px; height: ${imgSize}px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(0,0,0,0.2);">`;
     }
 
-    // ホールド実行処理（テトリス方式）
+    // ホールドボタンの有効/無効と文言を更新する関数
+    function updateHoldButtonState() {
+        holdBtn.textContent = `ホールド (${HOLD_COST}点消費)`;
+        // 落下可能・このターン未ホールド・ゲーム中・かつスコアが足りている時だけ有効
+        holdBtn.disabled = !(canDrop && canHold && !isGameOver && score >= HOLD_COST);
+    }
+
+    // ホールド実行処理（スコア消費方式）
     function performHold() {
         if (!canDrop || !canHold || isGameOver) return;
+        if (score < HOLD_COST) return; // スコア不足なら実行しない
+
+        // スコアを消費して画面表示を更新
+        score -= HOLD_COST;
+        scoreEl.textContent = score;
 
         canHold = false;
-        holdBtn.disabled = true;
 
         if (holdAnimalIndex === null) {
             // 初期（空）のとき：今の動物をホールドし、「次の動物」を繰り上げる
@@ -147,6 +161,7 @@ function startGame() {
         currentX = Math.max(radius, Math.min(WIDTH - radius, currentX));
 
         updateHoldDisplay();
+        updateHoldButtonState();
     }
 
     // 初期動物のセット
@@ -157,6 +172,7 @@ function startGame() {
     holdBtn.disabled = false;
     updateNextDisplay();
     updateHoldDisplay();
+    updateHoldButtonState(); // ← 初期スコア0なので自動で無効化される
 
     // ホールドボタン・ショートカット操作
     holdBtn.addEventListener("click", (e) => {
@@ -252,6 +268,7 @@ function startGame() {
                 canHold = true;
                 holdBtn.disabled = false;
             }
+            updateHoldButtonState(); // ← 500点以上あればここで再び有効化
         }, 500);
     });
 
@@ -282,6 +299,7 @@ function startGame() {
                 // スコア加算（ゾウの score: 1280 がそのまま大きく加算されます）
                 score += ANIMALS[index].score;
                 scoreEl.textContent = score;
+                updateHoldButtonState(); // ← 500点を超えた瞬間にボタンが有効化
 
                 // 最大サイズ（ゾウ）同士なら消滅のみで新しい動物は生成しない
                 if (index >= ANIMALS.length - 1) continue;
@@ -333,6 +351,7 @@ function startGame() {
                     body.position.y - ANIMALS[body.animalIndex].radius < DEADLINE_Y
                 ) {
                     isGameOver = true;
+                    updateHoldButtonState(); // ← ゲームオーバー時は自動で無効化
                     holdBtn.disabled = true;
                     document.getElementById("final-score-text").textContent = `今回のスコア: ${score} 点`;
                     gameOverEl.classList.remove("hidden");
