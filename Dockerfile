@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # コンテナ内の作業ディレクトリを設定
 WORKDIR /app
 
-# 依存ライブラリ一覧を先にコピーしてインストール（キャッシュ効率化のため）
+# 依存ライブラリ一覧を先にコピーしてインストール
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
